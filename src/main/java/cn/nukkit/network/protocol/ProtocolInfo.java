@@ -1,5 +1,9 @@
 package cn.nukkit.network.protocol;
 
+import com.google.common.primitives.Ints;
+
+import java.util.List;
+
 /**
  * author: MagicDroidX & iNevet
  * Nukkit Project
@@ -13,7 +17,7 @@ public interface ProtocolInfo {
     int MINIMUM_COMPATIBLE_PROTOCOL = Integer.parseInt("113");
 
     String MINECRAFT_VERSION = "v1.x.x";
-    String MINECRAFT_VERSION_NETWORK = "1.2.7";
+    String MINECRAFT_VERSION_NETWORK = "1.2.9";
 
     byte LOGIN_PACKET = 0x01;
     byte PLAY_STATUS_PACKET = 0x02;

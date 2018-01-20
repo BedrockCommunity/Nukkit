@@ -21,8 +21,17 @@ public class BlockEntityJukebox extends BlockEntitySpawnable {
 
     public BlockEntityJukebox(FullChunk chunk, CompoundTag nbt) {
         super(chunk, nbt);
+    }
 
-        this.recordItem = NBTIO.getItemHelper(nbt.getCompound("RecordItem"));
+    @Override
+    protected void initBlockEntity() {
+        if (namedTag.contains("RecordItem")) {
+            this.recordItem = NBTIO.getItemHelper(namedTag.getCompound("RecordItem"));
+        } else {
+            this.recordItem = Item.get(0);
+        }
+
+        super.initBlockEntity();
     }
 
     @Override
@@ -41,20 +50,33 @@ public class BlockEntityJukebox extends BlockEntitySpawnable {
 
     public void play() {
         if (this.recordItem instanceof ItemRecord) {
-            LevelSoundEventPacket pk = new LevelSoundEventPacket();
-            pk.sound = ((ItemRecord) this.recordItem).getSoundId();
+            PlaySoundPacket pk = new PlaySoundPacket();
+            pk.name = ((ItemRecord) this.recordItem).getSoundId();
             pk.pitch = 1;
-            pk.extraData = -1;
-            pk.x = (float) this.x;
-            pk.y = (float) this.y;
-            pk.z = (float) this.z;
+            pk.volume = 1;
+            pk.x = getFloorX();
+            pk.y = getFloorY();
+            pk.z = getFloorZ();
+
+            Server.broadcastPacket(this.level.getPlayers().values(), pk);
+        }
+    }
+
+    public void stop() {
+        if (this.recordItem instanceof ItemRecord) {
+            StopSoundPacket pk = new StopSoundPacket();
+            pk.name = ((ItemRecord) this.recordItem).getSoundId();
 
             Server.broadcastPacket(this.level.getPlayers().values(), pk);
         }
     }
 
     public void dropItem() {
-        this.level.dropItem(this.up(), this.recordItem);
+        if (this.recordItem.getId() != 0) {
+            stop();
+            this.level.dropItem(this.up(), this.recordItem);
+            this.recordItem = Item.get(0);
+        }
     }
 
     @Override

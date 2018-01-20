@@ -9,7 +9,6 @@ import java.util.UUID;
  * Nukkit project
  */
 public final class CommandOriginData {
-
     public final Origin type;
     public final UUID uuid;
     public final String requestId;

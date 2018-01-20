@@ -37,7 +37,6 @@ import cn.nukkit.inventory.transaction.InventoryTransaction;
 import cn.nukkit.inventory.transaction.Old113InventoryTransaction;
 import cn.nukkit.inventory.transaction.action.CraftingTransferMaterialAction;
 import cn.nukkit.inventory.transaction.action.InventoryAction;
-import cn.nukkit.inventory.transaction.action.SlotChangeAction;
 import cn.nukkit.inventory.transaction.data.ReleaseItemData;
 import cn.nukkit.inventory.transaction.data.UseItemData;
 import cn.nukkit.inventory.transaction.data.UseItemOnEntityData;
@@ -46,17 +45,11 @@ import cn.nukkit.item.enchantment.Enchantment;
 import cn.nukkit.item.food.Food;
 import cn.nukkit.lang.TextContainer;
 import cn.nukkit.lang.TranslationContainer;
-import cn.nukkit.level.ChunkLoader;
-import cn.nukkit.level.Level;
-import cn.nukkit.level.Location;
-import cn.nukkit.level.Position;
+import cn.nukkit.level.*;
 import cn.nukkit.level.format.FullChunk;
 import cn.nukkit.level.format.generic.BaseFullChunk;
 import cn.nukkit.level.particle.CriticalParticle;
 import cn.nukkit.level.particle.PunchBlockParticle;
-import cn.nukkit.level.sound.ExperienceOrbSound;
-import cn.nukkit.level.sound.ItemFrameItemRemovedSound;
-import cn.nukkit.level.sound.LaunchSound;
 import cn.nukkit.math.*;
 import cn.nukkit.metadata.MetadataValue;
 import cn.nukkit.nbt.NBTIO;
@@ -581,8 +574,8 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                     // We are going to wait 3 seconds, if after 3 seconds we didn't receive a reply from the client, resend the packet.
                     try {
                         Thread.sleep(3000);
-                        boolean status = needACK.get(identifier);
-                        if (!status && isOnline()) {
+                        Boolean status = needACK.get(identifier);
+                        if ((status == null || !status) && isOnline()) {
                             sendCommandData();
                             return;
                         }
@@ -2027,6 +2020,15 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
                             this.sendPlayStatus(PlayStatusPacket.LOGIN_FAILED_SERVER);
                         }
+                        if (((LoginPacket) packet).protocol < 137) {
+                            DisconnectPacket disconnectPacket = new DisconnectPacket();
+                            disconnectPacket.message = message;
+                            disconnectPacket.encode();
+                            BatchPacket batch = new BatchPacket();
+                            batch.payload = disconnectPacket.getBuffer();
+                            this.directDataPacket(batch);
+                            // Still want to run close() to allow the player to be removed properly
+                        }
                         this.close("", message, false);
                         break;
                     }
@@ -2039,6 +2041,11 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                     this.setDataProperty(new StringEntityData(DATA_NAMETAG, this.username), false);
 
                     this.loginChainData = ClientChainData.read(loginPacket);
+
+                    if (!loginChainData.isXboxAuthed() && server.getPropertyBoolean("xbox-auth")) {
+                        kick(PlayerKickEvent.Reason.UNKNOWN, "disconnectionScreen.notAuthenticated", false);
+                    }
+
 
                     if (this.server.getOnlinePlayers().size() >= this.server.getMaxPlayers() && this.kick(PlayerKickEvent.Reason.SERVER_FULL, "disconnectionScreen.serverFull", false)) {
                         break;
@@ -2477,7 +2484,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                     }
 
                     this.craftingType = CRAFTING_SMALL;
-                    this.resetCraftingGridType();
+                    //this.resetCraftingGridType();
 
                     InteractPacket interactPacket = (InteractPacket) packet;
 
@@ -2630,7 +2637,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                         break;
                     }
                     this.craftingType = CRAFTING_SMALL;
-                    this.resetCraftingGridType();
+                    //this.resetCraftingGridType();
 
                     EntityEventPacket entityEventPacket = (EntityEventPacket) packet;
 
@@ -2854,7 +2861,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                                 this.level.dropItem(vector3, itemDrop);
                                 itemFrame.setItem(new ItemBlock(new BlockAir()));
                                 itemFrame.setItemRotation(0);
-                                this.getLevel().addSound(new ItemFrameItemRemovedSound(this));
+                                this.getLevel().addSound(this, Sound.BLOCK_ITEMFRAME_REMOVE_ITEM);
                             }
                         } else {
                             itemFrame.spawnTo(this);
@@ -2901,6 +2908,11 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                     this.level.addChunkPacket(this.getFloorX() >> 4, this.getFloorZ() >> 4, packet);
                     break;
                 case ProtocolInfo.INVENTORY_TRANSACTION_PACKET:
+                    if (this.isSpectator()) {
+                        this.sendAllInventories();
+                        break;
+                    }
+
                     InventoryTransactionPacket transactionPacket = (InventoryTransactionPacket) packet;
 
                     List<InventoryAction> actions = new ArrayList<>();
@@ -2937,7 +2949,6 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                         this.server.getLogger().debug("Got unexpected normal inventory action with incomplete crafting transaction from " + this.getName() + ", refusing to execute crafting");
                         this.craftingTransaction = null;
                     }
-
                     switch (transactionPacket.transactionType) {
                         case InventoryTransactionPacket.TYPE_NORMAL:
                             InventoryTransaction transaction = new InventoryTransaction(this, actions);
@@ -4534,6 +4545,19 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
         }
     }
 
+    @Override
+    public void setMaxHealth(int maxHealth) {
+        super.setMaxHealth(maxHealth);
+
+        Attribute attr = Attribute.getAttribute(Attribute.MAX_HEALTH).setMaxValue(this.getAbsorption() % 2 != 0 ? this.getMaxHealth() + 1 : this.getMaxHealth()).setValue(health > 0 ? (health < getMaxHealth() ? health : getMaxHealth()) : 0);
+        if (this.spawned) {
+            UpdateAttributesPacket pk = new UpdateAttributesPacket();
+            pk.entries = new Attribute[]{attr};
+            pk.entityId = this.id;
+            this.dataPacket(pk);
+        }
+    }
+
     public int getExperience() {
         return this.exp;
     }
@@ -5134,13 +5158,33 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
     }
 
     public void resetCraftingGridType() {
-        if (this.craftingGrid instanceof BigCraftingGrid) {
+        if (this.craftingGrid != null) {
             Item[] drops = this.inventory.addItem(this.craftingGrid.getContents().values().stream().toArray(Item[]::new));
-            for (Item drop : drops) {
-                this.dropItem(drop);
+
+            if (drops.length > 0) {
+                for (Item drop : drops) {
+                    this.dropItem(drop);
+                }
             }
 
-            this.craftingGrid = new CraftingGrid(this);
+            drops = this.inventory.addItem(this.cursorInventory.getItem(0));
+            if (drops.length > 0) {
+                for (Item drop : drops) {
+                    this.dropItem(drop);
+                }
+            }
+
+            this.cursorInventory.clearAll();
+            this.craftingGrid.clearAll();
+
+            if (this.craftingGrid instanceof BigCraftingGrid) {
+                this.craftingGrid = new CraftingGrid(this);
+
+                ContainerClosePacket pk = new ContainerClosePacket(); //be sure, big crafting is really closed
+                pk.windowId = ContainerIds.NONE;
+                this.dataPacket(pk);
+            }
+
             this.craftingType = 0;
         }
     }
@@ -5378,7 +5422,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                 int exp = xpOrb.getExp();
                 this.addExperience(exp);
                 entity.kill();
-                this.getLevel().addSound(new ExperienceOrbSound(this));
+                this.getLevel().addSound(this, Sound.RANDOM_ORB);
                 pickedXPOrb = tick;
                 return true;
             }

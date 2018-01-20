@@ -12,13 +12,18 @@ import cn.nukkit.network.protocol.PlayerProtocol;
 public class BlockEntitySkull extends BlockEntitySpawnable {
     public BlockEntitySkull(FullChunk chunk, CompoundTag nbt) {
         super(chunk, nbt);
-        if (!nbt.contains("SkullType")) {
-            nbt.putByte("SkullType", 0);
+    }
+
+    @Override
+    protected void initBlockEntity() {
+        if (!namedTag.contains("SkullType")) {
+            namedTag.putByte("SkullType", 0);
         }
-        if (!nbt.contains("Rot")) {
-            nbt.putByte("Rot", 0);
+        if (!namedTag.contains("Rot")) {
+            namedTag.putByte("Rot", 0);
         }
-        this.namedTag = nbt;
+
+        super.initBlockEntity();
     }
 
     @Override

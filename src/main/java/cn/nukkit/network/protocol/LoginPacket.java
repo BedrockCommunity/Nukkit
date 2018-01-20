@@ -38,6 +38,11 @@ public class LoginPacket extends DataPacket {
     @Override
     public void decode(PlayerProtocol protocol) {
         this.protocol = this.getInt();
+        if (protocol >= 0xffff) {
+            this.offset -= 6;
+            this.protocol = this.getInt();
+            this.offset += 1;
+        }
         if (protocol.equals(PlayerProtocol.PLAYER_PROTOCOL_113)) this.getByte();
         this.setBuffer(this.getByteArray(), 0);
         decodeChainData();

@@ -73,5 +73,4 @@ public class SlotChangeAction extends InventoryAction {
     public void onAddToTransaction(InventoryTransaction transaction) {
         transaction.addInventory(this.inventory);
     }
-
 }

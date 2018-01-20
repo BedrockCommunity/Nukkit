@@ -295,6 +295,7 @@ public class CraftingManager {
         if (brewingRecipes.containsKey(input.getId() + ":" + (!potion.hasMeta() ? 0 : potion.getDamage()))) {
             return brewingRecipes.get(input.getId() + ":" + (!potion.hasMeta() ? 0 : potion.getDamage()));
         }
+
         return null;
     }
 
@@ -352,7 +353,6 @@ public class CraftingManager {
             if (recipe != null && recipe.matchItems(this.cloneItemMap(inputMap), this.cloneItemMap(extraOutputMap))) {
                 return recipe;
             }
-
             for (ShapelessRecipe shapelessRecipe : recipes.values()) {
                 if (shapelessRecipe.matchItems(this.cloneItemMap(inputMap), this.cloneItemMap(extraOutputMap))) {
                     return shapelessRecipe;

@@ -232,7 +232,6 @@ public class InventoryTransaction {
     protected boolean callExecuteEvent() {
         InventoryTransactionEvent ev = new InventoryTransactionEvent(this);
         this.source.getServer().getPluginManager().callEvent(ev);
-
         return !ev.isCancelled();
     }
 
