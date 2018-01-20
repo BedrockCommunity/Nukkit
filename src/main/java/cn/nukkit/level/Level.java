@@ -2522,21 +2522,8 @@ public class Level implements ChunkManager, Metadatable {
                 }
                 this.timings.syncChunkSendPrepareTimer.stopTiming();
             }
-            int x = getHashX(index);
-            int z = getHashZ(index);
-            this.chunkSendTasks.put(index, true);
-            if (this.chunkCache.containsKey(index)) {
-                this.sendChunkFromCache(x, z);
-                continue;
-            }
-            this.timings.syncChunkSendPrepareTimer.startTiming();
-            AsyncTask task = this.provider.requestChunkTask(x, z);
-            if (task != null) {
-                this.server.getScheduler().scheduleAsyncTask(task);
-            }
-            this.timings.syncChunkSendPrepareTimer.stopTiming();
+            this.timings.syncChunkSendTimer.stopTiming();
         }
-        this.timings.syncChunkSendTimer.stopTiming();
     }
 
     public void chunkRequestCallback(int x, int z, byte[] payload113, byte[] payload) {

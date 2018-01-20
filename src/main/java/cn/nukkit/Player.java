@@ -37,6 +37,7 @@ import cn.nukkit.inventory.transaction.InventoryTransaction;
 import cn.nukkit.inventory.transaction.Old113InventoryTransaction;
 import cn.nukkit.inventory.transaction.action.CraftingTransferMaterialAction;
 import cn.nukkit.inventory.transaction.action.InventoryAction;
+import cn.nukkit.inventory.transaction.action.SlotChangeAction;
 import cn.nukkit.inventory.transaction.data.ReleaseItemData;
 import cn.nukkit.inventory.transaction.data.UseItemData;
 import cn.nukkit.inventory.transaction.data.UseItemOnEntityData;
@@ -2020,10 +2021,10 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
 
                             this.sendPlayStatus(PlayStatusPacket.LOGIN_FAILED_SERVER);
                         }
-                        if (((LoginPacket) packet).protocol < 137) {
+                        if (((LoginPacket) packet).protocol < 113) {
                             DisconnectPacket disconnectPacket = new DisconnectPacket();
                             disconnectPacket.message = message;
-                            disconnectPacket.encode();
+                            disconnectPacket.encode(this.protocol);
                             BatchPacket batch = new BatchPacket();
                             batch.payload = disconnectPacket.getBuffer();
                             this.directDataPacket(batch);
@@ -3653,7 +3654,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                                     snowball.kill();
                                 } else {
                                     snowball.spawnToAll();
-                                    this.level.addSound(new LaunchSound(this), this.getViewers().values());
+                                    //this.level.addSound(this.getViewers().values(), Sound.SNOW);
                                 }
                             } else {
                                 snowball.spawnToAll();
@@ -3687,7 +3688,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                                     egg.kill();
                                 } else {
                                     egg.spawnToAll();
-                                    this.level.addSound(new LaunchSound(this), this.getViewers().values());
+                                    //this.level.addSound(new LaunchSound(this), this.getViewers().values());
                                 }
                             } else {
                                 egg.spawnToAll();
@@ -3721,7 +3722,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                                     enderPearl.kill();
                                 } else {
                                     enderPearl.spawnToAll();
-                                    this.level.addSound(new LaunchSound(this), this.getViewers().values());
+                                    //this.level.addSound(new LaunchSound(this), this.getViewers().values());
                                 }
                             } else {
                                 enderPearl.spawnToAll();
@@ -3756,7 +3757,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                                     bottle.kill();
                                 } else {
                                     bottle.spawnToAll();
-                                    this.level.addSound(new LaunchSound(this), this.getViewers().values());
+                                    //this.level.addSound(new LaunchSound(this), this.getViewers().values());
                                 }
                             } else {
                                 bottle.spawnToAll();
@@ -3790,7 +3791,7 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                                     bottle.kill();
                                 } else {
                                     bottle.spawnToAll();
-                                    this.level.addSound(new LaunchSound(this), this.getViewers().values());
+                                    //this.level.addSound(new LaunchSound(this), this.getViewers().values());
                                 }
                             } else {
                                 bottle.spawnToAll();
@@ -3856,8 +3857,8 @@ public class Player extends EntityHuman implements CommandSender, InventoryHolde
                         Item heldItem = sourceItem.clone();
                         heldItem.setCount(sourceItem.getCount() - containerSetSlotPacket.item.getCount());
                         if (heldItem.getCount() > 0) { //In win10, click mouse and hold on item
-                            InventoryClickEvent inventoryClickEvent = new InventoryClickEvent(inv,
-                                    containerSetSlotPacket.slot, sourceItem, heldItem, containerSetSlotPacket.item);
+                            InventoryClickEvent inventoryClickEvent = new InventoryClickEvent(this,
+                                    inv, containerSetSlotPacket.slot, heldItem, containerSetSlotPacket.item);
                             this.getServer().getPluginManager().callEvent(inventoryClickEvent);
                         }
                     }

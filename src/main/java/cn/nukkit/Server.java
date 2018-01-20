@@ -552,12 +552,8 @@ public class Server {
             packets.put(protocol, pk);
         }
 
-        if(packet.pid() == ProtocolInfo.BATCH_PACKET) {
-            for (Player player : players) {
-                player.dataPacket(packet);
-            }
-        } else {
-            getInstance().batchPackets(players, new DataPacket[]{packet}, true);
+        for (Player player : players) {
+            player.dataPacket(packets.getOrDefault(player.getProtocol(), packet));
         }
 
         if (packet.encapsulatedPacket != null) {

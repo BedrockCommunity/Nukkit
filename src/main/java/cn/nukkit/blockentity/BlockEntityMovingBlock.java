@@ -53,7 +53,7 @@ public class BlockEntityMovingBlock extends BlockEntitySpawnable {
                 .putInt("x", (int) this.x)
                 .putInt("y", (int) this.y)
                 .putInt("z", (int) this.z)
-                .putBoolean("isMovable", this.isMovable)
+                .putBoolean("isMovable", this.isMovable())
                 .putFloat("movingBlockId", this.block.getId())
                 .putFloat("movingBlockData", this.block.getDamage())
                 .putInt("pistonPosX", this.piston.x)
