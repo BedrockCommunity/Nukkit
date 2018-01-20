@@ -221,13 +221,12 @@ public class Utils {
 
         return newArray;
     }
-
+  
     public static int toInt(Object number) {
-        if (number instanceof Integer) {
-            return (Integer) number;
+        if (number instanceof Double){
+            return Double.valueOf(Math.round((double) number)).intValue();
         }
-
-        return (int) Math.round((double) number);
+        return (int) number;
     }
 
     public static byte[] parseHexBinary(String s) {

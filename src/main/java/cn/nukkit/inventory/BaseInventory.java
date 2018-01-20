@@ -10,6 +10,7 @@ import cn.nukkit.item.Item;
 import cn.nukkit.item.ItemBlock;
 import cn.nukkit.network.protocol.InventoryContentPacket;
 import cn.nukkit.network.protocol.InventorySlotPacket;
+import cn.nukkit.network.protocol.MobEquipmentPacket;
 
 import java.util.*;
 
@@ -455,6 +456,7 @@ public abstract class BaseInventory implements Inventory {
         for (int i = 0; i < this.getSize(); ++i) {
             pk.slots[i] = this.getItem(i);
         }
+        pk.hotbar = new int[0];
 
         for (Player player : players) {
             int id = player.getWindowId(this);
@@ -462,6 +464,7 @@ public abstract class BaseInventory implements Inventory {
                 this.close(player);
                 continue;
             }
+            pk.eid = player.getId();
             pk.inventoryId = id;
             player.dataPacket(pk);
         }
@@ -529,6 +532,7 @@ public abstract class BaseInventory implements Inventory {
     public void sendSlot(int index, Player... players) {
         InventorySlotPacket pk = new InventorySlotPacket();
         pk.slot = index;
+        pk.hotbarSlot = index;
         pk.item = this.getItem(index).clone();
 
         for (Player player : players) {

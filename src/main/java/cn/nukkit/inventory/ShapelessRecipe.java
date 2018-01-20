@@ -19,8 +19,20 @@ public class ShapelessRecipe implements CraftingRecipe {
 
     private final List<Item> ingredients = new ArrayList<>();
 
+    private int recipeProtocol = 130;
+
     public ShapelessRecipe(Item result) {
         this.output = result.clone();
+    }
+
+    @Override
+    public boolean isCompatibleWith(int protocolVersion) {
+        return recipeProtocol <= protocolVersion;
+    }
+
+    @Override
+    public void setRecipeProtocol(int protocol){
+        this.recipeProtocol = protocol;
     }
 
     @Override
@@ -142,7 +154,7 @@ public class ShapelessRecipe implements CraftingRecipe {
 
 
             for (Item needItem : new ArrayList<>(needItems)) {
-                if (needItem.equals(haveItem, needItem.hasMeta(), needItem.hasCompoundTag()) && needItem.getCount() == haveItem.getCount()) {
+                if (needItem.equals(haveItem, !needItem.hasAnyDamageValue(), needItem.hasCompoundTag()) && needItem.getCount() == haveItem.getCount()) {
                     haveItems.remove(haveItem);
                     needItems.remove(needItem);
                     break;

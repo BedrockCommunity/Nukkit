@@ -20,6 +20,8 @@ public class ShapedRecipe implements CraftingRecipe {
 
     private final Map<Character, Item> ingredients = new HashMap<>();
 
+    private int recipeProtocol = 130;
+
     /**
      * Constructs a ShapedRecipe instance.
      *
@@ -72,6 +74,16 @@ public class ShapedRecipe implements CraftingRecipe {
         for (Map.Entry<Character, Item> entry : ingredients.entrySet()) {
             this.setIngredient(entry.getKey(), entry.getValue());
         }
+    }
+
+    @Override
+    public boolean isCompatibleWith(int protocolVersion) {
+        return recipeProtocol <= protocolVersion;
+    }
+
+    @Override
+    public void setRecipeProtocol(int protocol){
+        this.recipeProtocol = protocol;
     }
 
     public int getWidth() {
@@ -198,7 +210,7 @@ public class ShapedRecipe implements CraftingRecipe {
             }
 
             for (Item needItem : new ArrayList<>(needItems)) {
-                if (needItem.equals(haveItem, needItem.hasMeta(), needItem.hasCompoundTag()) && needItem.getCount() == haveItem.getCount()) {
+                if (needItem.equals(haveItem, !needItem.hasAnyDamageValue(), needItem.hasCompoundTag()) && needItem.getCount() == haveItem.getCount()) {
                     haveItems.remove(haveItem);
                     needItems.remove(needItem);
                     break;
@@ -218,7 +230,7 @@ public class ShapedRecipe implements CraftingRecipe {
                 Item given = input[y][x];
                 Item required = map.get(y).get(x);
 
-                if (given == null || !required.equals(given, required.hasMeta(), required.hasCompoundTag()) || required.getCount() != given.getCount()) {
+                if (given == null || !required.equals(given, !required.hasAnyDamageValue(), required.hasCompoundTag()) || required.getCount() != given.getCount()) {
                     return false;
                 }
 

@@ -6,7 +6,6 @@ import cn.nukkit.inventory.BigCraftingGrid;
 import cn.nukkit.inventory.CraftingRecipe;
 import cn.nukkit.inventory.transaction.action.InventoryAction;
 import cn.nukkit.item.Item;
-import cn.nukkit.math.NukkitMath;
 import cn.nukkit.network.protocol.ContainerClosePacket;
 import cn.nukkit.network.protocol.types.ContainerIds;
 
@@ -48,7 +47,7 @@ public class CraftingTransaction extends InventoryTransaction {
     }
 
     public void setInput(int index, Item item) {
-        int y = NukkitMath.floorDouble((double) index / this.gridSize);
+        int y = index / this.gridSize;
         int x = index % this.gridSize;
 
         if (this.inputs[y][x].isNull()) {
@@ -89,6 +88,11 @@ public class CraftingTransaction extends InventoryTransaction {
         return recipe;
     }
 
+    //1.1 only
+    public void setRecipe(CraftingRecipe recipe){
+        this.recipe = recipe;
+    }
+
     private Item[][] reindexInputs() {
         int xOffset = gridSize;
         int yOffset = gridSize;
@@ -125,10 +129,9 @@ public class CraftingTransaction extends InventoryTransaction {
         for (int y = 0; y < reindexed.length; y++) {
             Item[] row = reindexed[y];
 
-            System.arraycopy(this.inputs[y + yOffset], xOffset, reindexed[y], 0, row.length); //hope I converted it right :D
-            /*for (int x = 0; x < row.length; x++) {
+            for (int x = 0; x < row.length; x++) {
                 reindexed[y][x] = this.inputs[y + yOffset][x + xOffset];
-            }*/
+            }
         }
 
         return reindexed;
@@ -161,8 +164,6 @@ public class CraftingTransaction extends InventoryTransaction {
         ContainerClosePacket pk = new ContainerClosePacket();
         pk.windowId = ContainerIds.NONE;
         this.source.dataPacket(pk);
-
-        this.source.resetCraftingGridType();
     }
 
     public boolean execute() {

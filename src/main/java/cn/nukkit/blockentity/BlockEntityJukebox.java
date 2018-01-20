@@ -7,8 +7,8 @@ import cn.nukkit.item.ItemRecord;
 import cn.nukkit.level.format.FullChunk;
 import cn.nukkit.nbt.NBTIO;
 import cn.nukkit.nbt.tag.CompoundTag;
-import cn.nukkit.network.protocol.PlaySoundPacket;
-import cn.nukkit.network.protocol.StopSoundPacket;
+import cn.nukkit.network.protocol.LevelSoundEventPacket;
+import cn.nukkit.network.protocol.PlayerProtocol;
 
 import java.util.Objects;
 
@@ -86,7 +86,7 @@ public class BlockEntityJukebox extends BlockEntitySpawnable {
     }
 
     @Override
-    public CompoundTag getSpawnCompound() {
+    public CompoundTag getSpawnCompound(PlayerProtocol protocol) {
         return getDefaultCompound(this, JUKEBOX)
                 .putCompound("RecordItem", NBTIO.putItemHelper(this.recordItem));
     }
